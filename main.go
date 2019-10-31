@@ -6,7 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/aliforever/gotelbot/functions"
@@ -15,12 +19,13 @@ import (
 )
 
 func main() {
-	var init, botToken, path, langs string
+	var init, botToken, path, langs, menu string
 	var botUsername, botPath *string
 	var languages []string
 	flag.StringVar(&init, "init", "", "--init=bot_token[,bot_username]")
 	flag.StringVar(&langs, "langs", "", "--langs=english,farsi")
 	flag.StringVar(&path, "path", "", "--path=/home/go/src/")
+	flag.StringVar(&menu, "menu", "", "--menu=Main[:20]")
 	flag.Parse()
 	if init != "" {
 		split := strings.Split(init, ",")
@@ -40,6 +45,27 @@ func main() {
 			return
 		}
 		fmt.Println(fmt.Sprintf("%s structure is created at %s", botUsername, botPath))
+		return
+	}
+	if menu != "" {
+		var err error
+		if path != "" {
+			botPath = &path
+		}
+		lineNumber := 0
+		split := strings.Split(menu, ":")
+		if len(split) == 2 {
+			lineNumber, err = strconv.Atoi(split[1])
+			if err != nil {
+				fmt.Println("invalid line number, should be integer")
+				return
+			}
+		}
+		err = InitMenu(split[0], lineNumber, botPath)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
 	}
 }
 
@@ -65,6 +91,45 @@ func GetTelegramUsernameWithToken(token string) (usernameResp *UsernameResponse,
 	defer resp.Body.Close()
 	j := json.NewDecoder(resp.Body)
 	err = j.Decode(&usernameResp)
+	return
+}
+
+func InitMenu(menuName string, lineNumber int, botPath *string) (err error) {
+	var path string
+	if botPath == nil {
+		path, err = functions.CurrentPath()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	} else {
+		if _, err = os.Stat(*botPath); err != nil {
+			return
+		}
+		path = *botPath
+	}
+	applicationName := ""
+	applicationPath := fmt.Sprintf("%s/application/application.go", path)
+	var app []byte
+	app, err = ioutil.ReadFile(applicationPath)
+	if err != nil {
+		err = errors.New("application file not found in path, " + err.Error())
+		return
+	}
+	r := regexp.MustCompile(`type\s+(.+)\s+struct\s+{`)
+	applicationStructs := r.FindAllStringSubmatch(string(app), -1)
+	if len(applicationStructs) != 1 || len(applicationStructs[0]) != 2 {
+		err = errors.New("more than one structs in application file, please pass --app=name")
+		return
+	}
+	applicationName = applicationStructs[0][1]
+	err = templates.Template{}.InitMenu(path, applicationName, menuName, lineNumber)
+	if err == nil {
+		err = functions.FmtPath(path)
+		if err == nil {
+			err = functions.ImportsPath(path)
+		}
+	}
 	return
 }
 

@@ -11,6 +11,8 @@ type TemplateData struct {
 	ApplicationName  string
 	IsMultiLingual   bool
 	Languages        []string
+	Language         string
+	LanguageSign     string
 	DefaultLanguage  string
 	BotUsername      string
 	BotToken         string
@@ -20,6 +22,7 @@ type TemplateData struct {
 	AdminUserId      int
 	SuperCommandSign string
 	LanguageName     string
+	MenuName         string
 }
 
 func (td TemplateData) main() string {
@@ -199,6 +202,45 @@ func MakeInlineReplyKeyboardFromArray(rows ...[][]map[string]string) *tgbotapi.I
 	return keyboard
 }`
 
+}
+
+func (td TemplateData) menu() string {
+	return `func (bot *{{.ApplicationName}}) {{.MenuName}}Menu() {
+	bot.CurrentUser.SaveField("menu", "MainMenu")
+
+	if !bot.IsSwitched {
+		if bot.Update.Message.Text != "" {
+			items := map[string]func(){
+				bot.Language.BackBtn(): bot.MainMenu,
+			}
+			if _, ok := items[bot.Update.Message.Text]; ok {
+				bot.IsSwitched = true
+				items[bot.Update.Message.Text]()
+				return
+			}
+		}
+	}
+	cfg := tgbotapi.NewMessage(int64(bot.CurrentUser.Id), bot.Language.{{.MenuName}}Menu())
+	cfg.ReplyMarkup = bot.{{.MenuName}}MenuKeyboard()
+	api.Client.Send(cfg)
+}
+
+func (bot *{{.ApplicationName}}) {{.MenuName}}MenuKeyboard() (keyboard *tgbotapi.ReplyKeyboardMarkup) {
+	var rows [][]string
+	rows = append(rows, []string{bot.Language.BackBtn()})
+	keyboard = MakeReplyKeyboardFromArray(rows)
+	return
+}`
+}
+
+func (td TemplateData) menuTextInterface() string {
+	return `{{.MenuName}}Menu() string`
+}
+
+func (td TemplateData) menuTextLanguage() string {
+	return `func ({{.LanguageSign}} {{.Language}}) {{.MenuName}}Menu() string {
+	return "Welcome to {{.MenuName}} Menu"
+}`
 }
 
 func (td TemplateData) application() string {
@@ -423,9 +465,9 @@ func (bot *{{.ApplicationName}}) MainMenu() {
 	}
 
 	cfg := tgbotapi.NewMessage(int64(bot.CurrentUser.Id), bot.Language.MainMenu())
-	{{if .IsMultiLingual}}
+	{{- if .IsMultiLingual}}
 	cfg.ReplyMarkup = bot.MainMenuKeyboard()
-	{{end}}
+	{{- end}}
 	api.Client.Send(cfg)
 }
 
@@ -438,6 +480,42 @@ func (bot *{{.ApplicationName}}) MainMenuKeyboard() (keyboard *tgbotapi.ReplyKey
 }
 {{end}}
 `
+
+}
+
+func (td TemplateData) language() string {
+	return `package languages
+
+type {{.LanguageName}} struct {
+}
+
+func ({{.LanguageSign}} {{.LanguageName}}) LanguageFlag() string {
+	return "🇺🇸"
+}
+
+func ({{.LanguageSign}} {{.LanguageName}}) LanguageName() string {
+	return "{{.LanguageName}}"
+}
+
+func ({{.LanguageSign}} {{.LanguageName}}) LanguageCode() string {
+	return "EN"
+}
+
+func ({{.LanguageSign}} {{.LanguageName}}) SelectLanguageMenu() string {
+	return "Please Select Your Language"
+}
+
+func ({{.LanguageSign}} {{.LanguageName}}) SelectLanguageBtn() string {
+	return "🇮🇷🇺🇸 Change Language"
+}
+
+func ({{.LanguageSign}} {{.LanguageName}}) MainMenu() string {
+	return "You're in Main Menu, Please Choose an Option"
+}
+
+func ({{.LanguageSign}} {{.LanguageName}}) BackBtn() string {
+	return "🔙 Back 🔙"
+}`
 
 }
 
@@ -537,8 +615,73 @@ func (td TemplateData) GetMethodsFile(botGoPathSrc string) (result string, err e
 	return
 }
 
-func (td TemplateData) FillLanguageFile(content, languageName string) (result string, err error) {
+func (td TemplateData) GetMenuText(applicationName, menuName string) (result string, err error) {
+	content := td.menu()
+	td.ApplicationName = applicationName
+	td.MenuName = menuName
+	var (
+		tmpl *template.Template
+		bf   bytes.Buffer
+	)
+
+	tmpl, err = template.New("menu").Parse(content)
+	if err != nil {
+		return
+	}
+	err = tmpl.Execute(&bf, td)
+	if err != nil {
+		return
+	}
+	result = bf.String()
+	return
+}
+
+func (td TemplateData) GetMenuTextInterface(menuName string) (result string, err error) {
+	content := td.menuTextInterface()
+	td.MenuName = menuName
+	var (
+		tmpl *template.Template
+		bf   bytes.Buffer
+	)
+
+	tmpl, err = template.New("menu_text_interface").Parse(content)
+	if err != nil {
+		return
+	}
+	err = tmpl.Execute(&bf, td)
+	if err != nil {
+		return
+	}
+	result = bf.String()
+	return
+}
+
+func (td TemplateData) GetMenuTextLanguage(language, sign, menu string) (result string, err error) {
+	content := td.menuTextLanguage()
+	td.MenuName = menu
+	td.Language = language
+	td.LanguageSign = sign
+	var (
+		tmpl *template.Template
+		bf   bytes.Buffer
+	)
+
+	tmpl, err = template.New("menu_text_language").Parse(content)
+	if err != nil {
+		return
+	}
+	err = tmpl.Execute(&bf, td)
+	if err != nil {
+		return
+	}
+	result = bf.String()
+	return
+}
+
+func (td TemplateData) FillLanguageFile(languageSign, languageName string) (result string, err error) {
+	content := td.language()
 	td.LanguageName = languageName
+	td.LanguageSign = languageSign
 	var (
 		tmpl *template.Template
 		bf   bytes.Buffer

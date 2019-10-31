@@ -3,6 +3,7 @@ package functions
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 )
 
@@ -29,6 +30,14 @@ func ImportsPath(path string) (err error) {
 	err = cmd.Run()
 	if err != nil {
 		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		return
+	}
+	return
+}
+
+func CurrentPath() (path string, err error) {
+	path, err = os.Getwd()
+	if err != nil {
 		return
 	}
 	return

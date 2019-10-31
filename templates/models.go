@@ -6,14 +6,6 @@ import (
 
 const modelsFilePath string = "%s/models/"
 
-func (t Template) modelsGlobalsFile() string {
-	return `package models
-
-import "github.com/aliforever/telegram-bot-api"
-
-var API *tgbotapi.BotAPI`
-}
-
 func (t Template) initDatabase(botPath, botUsername string) (err error) {
 	_, err = gomondel.InitDatabase(botPath, botUsername)
 	return

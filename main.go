@@ -19,13 +19,15 @@ import (
 )
 
 func main() {
-	var init, botToken, path, langs, menu string
+	var init, botToken, path, langs, text, menu string
 	var botUsername, botPath *string
 	var languages []string
+	var err error
 	flag.StringVar(&init, "init", "", "--init=bot_token[,bot_username]")
 	flag.StringVar(&langs, "langs", "", "--langs=english,farsi")
 	flag.StringVar(&path, "path", "", "--path=/home/go/src/")
 	flag.StringVar(&menu, "menu", "", "--menu=Main[:20]")
+	flag.StringVar(&text, "text", "", "--text=WelcomeToBot")
 	flag.Parse()
 	if init != "" {
 		split := strings.Split(init, ",")
@@ -48,7 +50,6 @@ func main() {
 		return
 	}
 	if menu != "" {
-		var err error
 		if path != "" {
 			botPath = &path
 		}
@@ -66,6 +67,11 @@ func main() {
 			fmt.Println(err)
 		}
 		return
+	}
+	if text != "" {
+		if path != "" {
+			botPath = &path
+		}
 	}
 }
 

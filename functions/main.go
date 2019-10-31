@@ -8,7 +8,7 @@ import (
 )
 
 func FmtPath(path string) (err error) {
-	cmd := exec.Command("go", "fmt", path+"/", "./...")
+	cmd := exec.Command("go", "fmt", path+"/", "*")
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out

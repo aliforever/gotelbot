@@ -23,11 +23,12 @@
         - (if you don't pass ',username', gotelbot will grab the username)
         - (if you don't pass --path, gotelbot will use GOPATH environment variable)
         - (if you don't pass --langs, gotelbot will use English as default language)
+    example: `gotelbot --init=bot123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`
 2. ##### `gotelbot --menu=name[:line] [--path=path/to/project]`
         - (if you don't pass ':line', gotelbot will append menu to end of application.go file)
         - (if you don't pass --path, gotelbot will read current terminal directory, 
         where gotelbot command was executed. Make sure to cd bot's path.)
-
+    example: `gotelbot --menu=Welcome`
 #### **Flags**
 + `--langs=english,persian,italian`
 + `--path=/home/go/src/`

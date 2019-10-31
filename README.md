@@ -2,6 +2,7 @@
 
 #### **Features:**
 + Multilingual
++ MongoDB Database Storage
 + Menu Based
 + Super Easy to Develop
 

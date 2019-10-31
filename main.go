@@ -132,9 +132,9 @@ func InitMenu(menuName string, lineNumber int, botPath *string) (err error) {
 	err = templates.Template{}.InitMenu(path, applicationName, menuName, lineNumber)
 	if err == nil {
 		err = functions.FmtPath(path)
-		if err == nil {
+		/*if err == nil {
 			err = functions.ImportsPath(path)
-		}
+		}*/
 	}
 	return
 }

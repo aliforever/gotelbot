@@ -63,10 +63,10 @@ func (t Template) Init(botUsername, botToken, botPath string, languages []string
 		return
 	}
 	err = functions.FmtPath(botPath)
-	if err != nil {
+	/*if err != nil {
 		return
 	}
-	err = functions.ImportsPath(botPath)
+	err = functions.ImportsPath(botPath)*/
 	return
 }
 

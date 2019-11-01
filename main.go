@@ -8,7 +8,6 @@ import (
 	"go/build"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -72,6 +71,11 @@ func main() {
 		if path != "" {
 			botPath = &path
 		}
+		err = InitText(text, botPath)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
 	}
 }
 
@@ -100,19 +104,24 @@ func GetTelegramUsernameWithToken(token string) (usernameResp *UsernameResponse,
 	return
 }
 
+func InitText(text string, botPath *string) (err error) {
+	var path string
+	path, err = functions.GetPath(botPath)
+	if err != nil {
+		return
+	}
+	err = templates.Template{}.InitText(path, text)
+	if err == nil {
+		err = functions.FmtPath(path)
+	}
+	return
+}
+
 func InitMenu(menuName string, lineNumber int, botPath *string) (err error) {
 	var path string
-	if botPath == nil {
-		path, err = functions.CurrentPath()
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	} else {
-		if _, err = os.Stat(*botPath); err != nil {
-			return
-		}
-		path = *botPath
+	path, err = functions.GetPath(botPath)
+	if err != nil {
+		return
 	}
 	applicationName := ""
 	applicationPath := fmt.Sprintf("%s/application/application.go", path)

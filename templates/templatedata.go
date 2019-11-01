@@ -12,6 +12,7 @@ type TemplateData struct {
 	IsMultiLingual   bool
 	Languages        []string
 	Language         string
+	Text             string
 	LanguageSign     string
 	DefaultLanguage  string
 	BotUsername      string
@@ -240,6 +241,16 @@ func (td TemplateData) menuTextInterface() string {
 func (td TemplateData) menuTextLanguage() string {
 	return `func ({{.LanguageSign}} {{.Language}}) {{.MenuName}}Menu() string {
 	return "Welcome to {{.MenuName}} Menu"
+}`
+}
+
+func (td TemplateData) textInterface() string {
+	return `{{.Text}}() string`
+}
+
+func (td TemplateData) textLanguage() string {
+	return `func ({{.LanguageSign}} {{.Language}}) {{.Text}}() string {
+	return "Text Goes Here"
 }`
 }
 
@@ -645,6 +656,48 @@ func (td TemplateData) GetMenuTextInterface(menuName string) (result string, err
 	)
 
 	tmpl, err = template.New("menu_text_interface").Parse(content)
+	if err != nil {
+		return
+	}
+	err = tmpl.Execute(&bf, td)
+	if err != nil {
+		return
+	}
+	result = bf.String()
+	return
+}
+
+func (td TemplateData) GetTextInterface(text string) (result string, err error) {
+	content := td.textInterface()
+	td.Text = text
+	var (
+		tmpl *template.Template
+		bf   bytes.Buffer
+	)
+
+	tmpl, err = template.New("text_interface").Parse(content)
+	if err != nil {
+		return
+	}
+	err = tmpl.Execute(&bf, td)
+	if err != nil {
+		return
+	}
+	result = bf.String()
+	return
+}
+
+func (td TemplateData) GetTextLanguage(language, sign, text string) (result string, err error) {
+	content := td.textLanguage()
+	td.Text = text
+	td.Language = language
+	td.LanguageSign = sign
+	var (
+		tmpl *template.Template
+		bf   bytes.Buffer
+	)
+
+	tmpl, err = template.New("text_language").Parse(content)
 	if err != nil {
 		return
 	}

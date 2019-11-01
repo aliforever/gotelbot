@@ -42,3 +42,19 @@ func CurrentPath() (path string, err error) {
 	}
 	return
 }
+
+func GetPath(path *string) (finalPath string, err error) {
+	if path == nil {
+		finalPath, err = CurrentPath()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	} else {
+		if _, err = os.Stat(*path); err != nil {
+			return
+		}
+		finalPath = *path
+	}
+	return
+}
